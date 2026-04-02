@@ -50,7 +50,7 @@ func main() {
 
 	fmt.Println(sqlite3.Version())
 
-	db, err := sql.Open(`sqlite3dyn`, "file:"+resetTime.Format("2006-01-02")+"?mode=memory&cache=shared")
+	db, err := sql.Open(`sqlite3`, "file:"+resetTime.Format("2006-01-02")+"?mode=memory&cache=shared")
 	if err != nil {
 		panic(err)
 	}
@@ -121,7 +121,7 @@ func main() {
 
 	fmt.Println(sqlite3.Version())
 
-	db, err := sql.Open(`sqlite3dyn`, path)
+	db, err := sql.Open(`sqlite3`, path)
 	if err != nil {
 		panic(err)
 	}
