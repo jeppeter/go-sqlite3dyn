@@ -41,10 +41,8 @@ package main
 import (
 	"os"
 	"fmt"
-
 	"database/sql"
-
-	"github.com/iamacarpet/go-sqlite3-dynamic"
+	"github.com/jeppeter/go-sqlite3dyn"
 )
 
 func main() {
@@ -52,7 +50,7 @@ func main() {
 
 	fmt.Println(sqlite3.Version())
 
-	db, err := sql.Open(`sqlite3`, "file:"+resetTime.Format("2006-01-02")+"?mode=memory&cache=shared")
+	db, err := sql.Open(`sqlite3dyn`, "file:"+resetTime.Format("2006-01-02")+"?mode=memory&cache=shared")
 	if err != nil {
 		panic(err)
 	}
@@ -109,7 +107,7 @@ import (
 
 	"database/sql"
 
-	"github.com/iamacarpet/go-sqlite3-dynamic"
+	"github.com/iamacarpet/go-sqlite3dyn"
 )
 
 func main() {
@@ -123,7 +121,7 @@ func main() {
 
 	fmt.Println(sqlite3.Version())
 
-	db, err := sql.Open(`sqlite3`, path)
+	db, err := sql.Open(`sqlite3dyn`, path)
 	if err != nil {
 		panic(err)
 	}
