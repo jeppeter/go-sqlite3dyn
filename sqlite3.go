@@ -104,7 +104,7 @@ func (d *SQLiteDriver) Open(dsn string) (driver.Conn, error) {
 	}
 
 	var db sqlite3
-	logTrace("dsn %s", dsn)
+	logTrace("dsn %s len(%d)", dsn, len([]byte(dsn)))
 	rv := sqlite3_open_v2(dsn, &db, SQLITE_OPEN_FULLMUTEX|SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE, "")
 	if rv != 0 {
 		logTrace("rv %d", rv)

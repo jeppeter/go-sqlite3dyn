@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	path := ".\\test.db"
+	path := "./test.db"
 
 	//f, err := os.Create(path)
 	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0664)
