@@ -18,6 +18,7 @@ import (
 
 // Exec implements Execer.
 func (c *SQLiteConn) Exec(query string, args []driver.Value) (driver.Result, error) {
+	logTrace(" ")
 	list := make([]namedValue, len(args))
 	for i, v := range args {
 		list[i] = namedValue{
@@ -31,10 +32,12 @@ func (c *SQLiteConn) Exec(query string, args []driver.Value) (driver.Result, err
 func (c *SQLiteConn) exec(ctx context.Context, query string, args []namedValue) (driver.Result, error) {
 	start := 0
 	for {
+		logTrace(" ")
 		s, err := c.prepare(ctx, query)
 		if err != nil {
 			return nil, err
 		}
+
 		var res driver.Result
 		if s.(*SQLiteStmt).s != sqlite3_stmt(uintptr(0)) {
 			na := s.NumInput()
@@ -123,6 +126,7 @@ func (c *SQLiteConn) Prepare(query string) (driver.Stmt, error) {
 }
 
 func (c *SQLiteConn) prepare(ctx context.Context, query string) (driver.Stmt, error) {
+	logTrace(" ")
 	rv, s, tail := sqlite3_prepare_v2(c.db, query)
 	if rv != SQLITE_OK {
 		return nil, fmt.Errorf("Error during prepare: %s", c.lastError())
