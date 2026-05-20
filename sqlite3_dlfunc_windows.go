@@ -1,78 +1,35 @@
 package sqlite3dyn
 
 import (
-	"github.com/jeppeter/go-sqlite3dyn/internal/dlfunc"
+	"syscall"
 )
 
-var (
-	sqlite3_dll     *dlfunc.DllLib  = nil
-	sqlite3_open_v2 *dlfunc.DllFunc = nil
-	sqlite3_exec    *dlfunc.DllFunc = nil
-	sqlite3_close   *dlfunc.DllFunc = nil
-	sqlite3_free    *dlfunc.DllFunc = nil
-)
+func win_ptr_callstk(ptr uintptr, argc uintptr, argv uintptr, colname uintptr) uintptr {
+	var stks []string = []string{}
+	var cols []string = []string{}
+	var curptr uintptr
+	var i int
+	var pval *PtrValues
+	var retval uintptr = 0
+	var err error
 
-func InitDll(dllname string) (err error) {
-	defer func() {
-		if err != nil {
-			sqlite3_open_v2 = nil
-			sqlite3_exec = nil
-			sqlite3_close = nil
-			sqlite3_free = nil
-			sqlite3_dll = nil
-		}
+	args := (*[1 << 30]*byte)(unsafe.Pointer(argv))
+	argcols := (*[1 << 30]*byte)(unsafe.Pointer(colname))
+	pval = (*PtrValues)(unsafe.Pointer(ptr))
+	for i = 0; i < int(argc); i += 1 {
+		curptr = uintptr(unsafe.Pointer(args[i]))
+		stks = append(stks, dlfunc.MakeGoStringFromPointer(curptr))
+		curptr = uintptr(unsafe.Pointer(argcols[i]))
+		cols = append(cols, dlfunc.MakeGoStringFromPointer(curptr))
 	}
 
-	sqlite3_dll, err = dlfunc.LoadDll(dllname)
+	err = pval.callback(pval.innerarg, stks, cols)
 	if err != nil {
-		return
+		retval = 1
 	}
-
-	sqlite3_open_v2, err = sqlite3_dll.GetFunc("sqlite3_open_v2")
-	if err != nil {
-		return
-	}
-
-	sqlite3_exec, err = sqlite3_dll.GetFunc("sqlite3_exec")
-	if err != nil {
-		return
-	}
-
-	sqlite3_close, err = sqlite3_dll.GetFunc("sqlite3_close")
-	if err != nil {
-		return
-	}
-
-	sqlite3_free, err = sqlite3_dll.GetFunc("sqlite3_free")
-	if err != nil {
-		return
-	}
-	return
+	return retval
 }
 
-type Sqlite3BaseConn struct {
-	dbconn uintptr
-}
-
-func (ptr *Sqlite3BaseConn) Close() {
-	if sqlite3_close == nil {
-		return
-	}
-
-	if ptr.dbconn != uintptr(0) {
-		sqlite3_close.CallN(1,ptr.dbconn)
-		ptr.dbconn = uintptr(0)
-	}
-	return
-}
-
-func ConnSqlite3(dsn string) (ptr *Sqlite3BaseConn, err error) {
-	ptr = nil
-	err = nil
-	if sqlite3_open_v2 == nil {
-		err = fmt.Errorf("not call InitDll succ")
-		return
-	}
-
-	
+func new_callback_func() (retptr uintptr) {
+	return uintptr(syscall.NewCallback(win_ptr_callstk))
 }
