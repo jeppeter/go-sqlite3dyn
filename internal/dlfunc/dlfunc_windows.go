@@ -51,6 +51,7 @@ func (ptr *DllLib) GetFunc(procname string) (retptr *DllFunc, err error) {
 	}
 	funcaddr, err = syscall.GetProcAddress(ptr.hdl, procname)
 	if err != nil {
+		err = fmt.Errorf("[%s] %s", procname, err.Error())
 		return
 	}
 	retptr = &DllFunc{}
@@ -114,7 +115,7 @@ func (fptr *DllFunc) CallN(num int, a ...uintptr) (retval uintptr, err error) {
 	}
 
 	if errv != 0 {
-		err = fmt.Errorf("%v", errv)
+		err = errv
 		return
 	}
 	err = nil

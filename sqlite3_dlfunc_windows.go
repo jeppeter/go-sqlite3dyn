@@ -18,6 +18,11 @@ func win_ptr_callstk(ptr uintptr, argc uintptr, argv uintptr, colname uintptr) u
 	args := (*[1 << 30]*byte)(unsafe.Pointer(argv))
 	argcols := (*[1 << 30]*byte)(unsafe.Pointer(colname))
 	pval = (*execCallArgs)(unsafe.Pointer(ptr))
+
+	if pval.callback == nil {
+		return retval
+	}
+
 	for i = 0; i < int(argc); i += 1 {
 		curptr = uintptr(unsafe.Pointer(args[i]))
 		stks = append(stks, dlfunc.MakeGoStringFromPointer(curptr))

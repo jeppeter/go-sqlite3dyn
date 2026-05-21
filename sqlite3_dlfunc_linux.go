@@ -24,6 +24,11 @@ func lx_ptr_callstk(ptr *C.int, argc C.int, argv **C.char, argvcols **C.char) C.
     args := (*[1 << 30]*byte)(unsafe.Pointer(argv))
     argcols := (*[1 << 30]*byte)(unsafe.Pointer(argvcols))
     pval = (*execCallArgs)(unsafe.Pointer(ptr))
+
+    if pval.callback == nil {
+        return
+    }
+
     for i = 0; i < int(argc); i += 1 {
         curptr = uintptr(unsafe.Pointer(args[i]))
         stks = append(stks, dlfunc.MakeGoStringFromPointer(curptr))

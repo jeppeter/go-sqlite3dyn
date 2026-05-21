@@ -3,6 +3,7 @@ package sqlite3dyn
 import (
 	"fmt"
 	"github.com/jeppeter/go-sqlite3dyn/internal/dlfunc"
+	//"github.com/jeppeter/go-sqlite3dyn/internal/logdbg"
 	"runtime"
 	"unsafe"
 )
@@ -31,22 +32,22 @@ func InitDll(dllname string) (err error) {
 		return
 	}
 
-	_func_sqlite3_open_v2, err = _lib_sqlite3_dll.GetFunc("_func_sqlite3_open_v2")
+	_func_sqlite3_open_v2, err = _lib_sqlite3_dll.GetFunc("sqlite3_open_v2")
 	if err != nil {
 		return
 	}
 
-	_func_sqlite3_exec, err = _lib_sqlite3_dll.GetFunc("_func_sqlite3_exec")
+	_func_sqlite3_exec, err = _lib_sqlite3_dll.GetFunc("sqlite3_exec")
 	if err != nil {
 		return
 	}
 
-	_func_sqlite3_close, err = _lib_sqlite3_dll.GetFunc("_func_sqlite3_close")
+	_func_sqlite3_close, err = _lib_sqlite3_dll.GetFunc("sqlite3_close")
 	if err != nil {
 		return
 	}
 
-	_func_sqlite3_free, err = _lib_sqlite3_dll.GetFunc("_func_sqlite3_free")
+	_func_sqlite3_free, err = _lib_sqlite3_dll.GetFunc("sqlite3_free")
 	if err != nil {
 		return
 	}
@@ -85,7 +86,13 @@ func ConnSqlite3(dsn string) (ptr *Sqlite3BaseConn, err error) {
 
 	retval, err = _func_sqlite3_open_v2.CallN(4, dbname, ppdb, flags, uintptr(0))
 	if err != nil {
-		return
+		flags = uintptr(SQLITE_OPEN_READWRITE)
+		retval, err = _func_sqlite3_open_v2.CallN(4, dbname, ppdb, flags, uintptr(0))
+		if err != nil {
+			err = fmt.Errorf("open [%s] error %s", dsn, err.Error())
+			return
+		}
+
 	}
 
 	if retval != uintptr(SQLITE_OK) {
@@ -113,6 +120,20 @@ func new_exec_args(arg uintptr, callback func(uintptr, []string, []string) error
 	return
 }
 
+type SqlError uintptr
+
+func (e SqlError) Error() string {
+	var result string
+	result = fmt.Sprintf("SqlError %d", e)
+	return result
+}
+
+func (e SqlError) error() string {
+	var result string
+	result = fmt.Sprintf("SqlError %d", e)
+	return result
+}
+
 func (ptr *Sqlite3BaseConn) Exec(sqlstr string, callarg uintptr, callback func(uintptr, []string, []string) error) (err error) {
 	var narg uintptr
 	var execarg *execCallArgs = nil
@@ -136,20 +157,20 @@ func (ptr *Sqlite3BaseConn) Exec(sqlstr string, callarg uintptr, callback func(u
 	sqlchar = uintptr(unsafe.Pointer(&sqlbyte[0]))
 
 	retval, err = _func_sqlite3_exec.CallN(5, ptr.dbconn, sqlchar, new_callback_func(), narg, perrmsg)
-	if err != nil {
-		if errmsg != uintptr(0) {
+	if errmsg != uintptr(0) {
+		err = fmt.Errorf("%s", dlfunc.MakeGoStringFromPointer(errmsg))
+		if _func_sqlite3_free != nil {
 			_func_sqlite3_free.CallN(1, errmsg)
 			errmsg = uintptr(0)
 		}
-		return
+	} else {
+		err = nil
+		if retval != uintptr(SQLITE_OK) {
+			err = SqlError(retval)
+		}
 	}
 
-	if retval != uintptr(SQLITE_OK) {
-		err = fmt.Errorf("exec [%s] error %d", sqlstr, retval)
-		if errmsg != uintptr(0) {
-			_func_sqlite3_free.CallN(1, errmsg)
-			errmsg = uintptr(0)
-		}
+	if err != nil {
 		return
 	}
 
