@@ -3,7 +3,7 @@ package sqlite3dyn
 import (
 	"fmt"
 	"github.com/jeppeter/go-sqlite3dyn/internal/dlfunc"
-	//"github.com/jeppeter/go-sqlite3dyn/internal/logdbg"
+	"github.com/jeppeter/go-sqlite3dyn/internal/logdbg"
 	"runtime"
 	"unsafe"
 )
@@ -158,7 +158,10 @@ func (ptr *Sqlite3BaseConn) Exec(sqlstr string, callarg uintptr, callback func(u
 
 	retval, err = _func_sqlite3_exec.CallN(5, ptr.dbconn, sqlchar, new_callback_func(), narg, perrmsg)
 	if errmsg != uintptr(0) {
-		err = fmt.Errorf("%s", dlfunc.MakeGoStringFromPointer(errmsg))
+		var serr string
+		serr = dlfunc.MakeGoStringFromPointer(errmsg)
+		logdbg.Error("serr %s retval %d", serr, retval)
+		err = fmt.Errorf("%s", serr)
 		if _func_sqlite3_free != nil {
 			_func_sqlite3_free.CallN(1, errmsg)
 			errmsg = uintptr(0)

@@ -100,19 +100,19 @@ func main() {
 	var err error
 	parser, err = extargsparse.NewExtArgsParse(nil, nil)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s", err.Error())
+		fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 		atexit.Exit(5)
 	}
 
 	err = LoadParser(parser)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s", err.Error())
+		fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 		atexit.Exit(5)
 	}
 
 	_, err = parser.ParseCommandLine(nil, nil)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s", err.Error())
+		fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 		atexit.Exit(4)
 	}
 	atexit.Exit(0)

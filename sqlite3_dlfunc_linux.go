@@ -26,7 +26,7 @@ func lx_ptr_callstk(ptr *C.int, argc C.int, argv **C.char, argvcols **C.char) C.
     pval = (*execCallArgs)(unsafe.Pointer(ptr))
 
     if pval.callback == nil {
-        return
+        return retval
     }
 
     for i = 0; i < int(argc); i += 1 {
