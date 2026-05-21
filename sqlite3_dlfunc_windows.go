@@ -1,7 +1,9 @@
 package sqlite3dyn
 
 import (
+	"github.com/jeppeter/go-sqlite3dyn/internal/dlfunc"
 	"syscall"
+	"unsafe"
 )
 
 func win_ptr_callstk(ptr uintptr, argc uintptr, argv uintptr, colname uintptr) uintptr {
@@ -9,13 +11,13 @@ func win_ptr_callstk(ptr uintptr, argc uintptr, argv uintptr, colname uintptr) u
 	var cols []string = []string{}
 	var curptr uintptr
 	var i int
-	var pval *PtrValues
+	var pval *execCallArgs
 	var retval uintptr = 0
 	var err error
 
 	args := (*[1 << 30]*byte)(unsafe.Pointer(argv))
 	argcols := (*[1 << 30]*byte)(unsafe.Pointer(colname))
-	pval = (*PtrValues)(unsafe.Pointer(ptr))
+	pval = (*execCallArgs)(unsafe.Pointer(ptr))
 	for i = 0; i < int(argc); i += 1 {
 		curptr = uintptr(unsafe.Pointer(args[i]))
 		stks = append(stks, dlfunc.MakeGoStringFromPointer(curptr))
