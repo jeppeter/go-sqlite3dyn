@@ -96,6 +96,7 @@ func ConnSqlite3(dsn string) (ptr *Sqlite3BaseConn, err error) {
 	}
 
 	if retval != uintptr(SQLITE_OK) {
+		logdbg.Error("error retval %d", retval)
 		err = fmt.Errorf("open %s error %d", dsn, retval)
 		return
 	}
@@ -160,7 +161,7 @@ func (ptr *Sqlite3BaseConn) Exec(sqlstr string, callarg uintptr, callback func(u
 	if errmsg != uintptr(0) {
 		var serr string
 		serr = dlfunc.MakeGoStringFromPointer(errmsg)
-		logdbg.Error("serr %s retval %d", serr, retval)
+		logdbg.Error("errmsg [%s] retval %d", serr, retval)
 		err = fmt.Errorf("%s", serr)
 		if _func_sqlite3_free != nil {
 			_func_sqlite3_free.CallN(1, errmsg)
