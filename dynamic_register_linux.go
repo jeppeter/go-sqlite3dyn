@@ -11,7 +11,7 @@ package sqlite3dyn
 
 import (
 	"fmt"
-	//"github.com/notti/nocgo"
+	"github.com/notti/nocgo"
 )
 
 var (

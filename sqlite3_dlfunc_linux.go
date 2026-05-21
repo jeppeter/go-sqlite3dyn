@@ -1,6 +1,7 @@
-package main
+package sqlite3dyn
 
 import (
+    "github.com/jeppeter/go-sqlite3dyn/internal/dlfunc"
     "unsafe"
 )
 
@@ -30,7 +31,7 @@ func lx_ptr_callstk(ptr *C.int, argc C.int, argv **C.char, argvcols **C.char) C.
         cols = append(cols, dlfunc.MakeGoStringFromPointer(curptr))
     }
 
-    err = pval.callback(pval.ptrval, stks, cols)
+    err = pval.callback(pval.innerarg, stks, cols)
     if err != nil {
         retval = 1
     }
