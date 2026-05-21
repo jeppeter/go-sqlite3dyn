@@ -8,45 +8,45 @@ import (
 )
 
 var (
-	_sqlite3_dll     *dlfunc.DllLib  = nil
-	_sqlite3_open_v2 *dlfunc.DllFunc = nil
-	_sqlite3_exec    *dlfunc.DllFunc = nil
-	_sqlite3_close   *dlfunc.DllFunc = nil
-	_sqlite3_free    *dlfunc.DllFunc = nil
+	_lib_sqlite3_dll      *dlfunc.DllLib  = nil
+	_func_sqlite3_open_v2 *dlfunc.DllFunc = nil
+	_func_sqlite3_exec    *dlfunc.DllFunc = nil
+	_func_sqlite3_close   *dlfunc.DllFunc = nil
+	_func_sqlite3_free    *dlfunc.DllFunc = nil
 )
 
 func InitDll(dllname string) (err error) {
 	defer func() {
 		if err != nil {
-			_sqlite3_open_v2 = nil
-			_sqlite3_exec = nil
-			_sqlite3_close = nil
-			_sqlite3_free = nil
-			_sqlite3_dll = nil
+			_func_sqlite3_open_v2 = nil
+			_func_sqlite3_exec = nil
+			_func_sqlite3_close = nil
+			_func_sqlite3_free = nil
+			_lib_sqlite3_dll = nil
 		}
 	}()
 
-	_sqlite3_dll, err = dlfunc.LoadDll(dllname)
+	_lib_sqlite3_dll, err = dlfunc.LoadDll(dllname)
 	if err != nil {
 		return
 	}
 
-	_sqlite3_open_v2, err = _sqlite3_dll.GetFunc("_sqlite3_open_v2")
+	_func_sqlite3_open_v2, err = _lib_sqlite3_dll.GetFunc("_func_sqlite3_open_v2")
 	if err != nil {
 		return
 	}
 
-	_sqlite3_exec, err = _sqlite3_dll.GetFunc("_sqlite3_exec")
+	_func_sqlite3_exec, err = _lib_sqlite3_dll.GetFunc("_func_sqlite3_exec")
 	if err != nil {
 		return
 	}
 
-	_sqlite3_close, err = _sqlite3_dll.GetFunc("_sqlite3_close")
+	_func_sqlite3_close, err = _lib_sqlite3_dll.GetFunc("_func_sqlite3_close")
 	if err != nil {
 		return
 	}
 
-	_sqlite3_free, err = _sqlite3_dll.GetFunc("_sqlite3_free")
+	_func_sqlite3_free, err = _lib_sqlite3_dll.GetFunc("_func_sqlite3_free")
 	if err != nil {
 		return
 	}
@@ -58,12 +58,12 @@ type Sqlite3BaseConn struct {
 }
 
 func (ptr *Sqlite3BaseConn) Close() {
-	if _sqlite3_close == nil {
+	if _func_sqlite3_close == nil {
 		return
 	}
 
 	if ptr.dbconn != uintptr(0) {
-		_sqlite3_close.CallN(1, ptr.dbconn)
+		_func_sqlite3_close.CallN(1, ptr.dbconn)
 		ptr.dbconn = uintptr(0)
 	}
 	return
@@ -78,12 +78,12 @@ func ConnSqlite3(dsn string) (ptr *Sqlite3BaseConn, err error) {
 	var retval uintptr
 	ptr = nil
 	err = nil
-	if _sqlite3_open_v2 == nil {
+	if _func_sqlite3_open_v2 == nil {
 		err = fmt.Errorf("not call InitDll succ")
 		return
 	}
 
-	retval, err = _sqlite3_open_v2.CallN(4, dbname, ppdb, flags, uintptr(0))
+	retval, err = _func_sqlite3_open_v2.CallN(4, dbname, ppdb, flags, uintptr(0))
 	if err != nil {
 		return
 	}
@@ -122,7 +122,7 @@ func (ptr *Sqlite3BaseConn) Exec(sqlstr string, callarg uintptr, callback func(u
 	var sqlbyte []byte
 	var sqlchar uintptr
 
-	if _sqlite3_exec == nil {
+	if _func_sqlite3_exec == nil {
 		err = fmt.Errorf("not call InitDll succ")
 		return
 	}
@@ -135,10 +135,10 @@ func (ptr *Sqlite3BaseConn) Exec(sqlstr string, callarg uintptr, callback func(u
 	sqlbyte = dlfunc.MakeCString(sqlstr)
 	sqlchar = uintptr(unsafe.Pointer(&sqlbyte[0]))
 
-	retval, err = _sqlite3_exec.CallN(5, ptr.dbconn, sqlchar, new_callback_func(), narg, perrmsg)
+	retval, err = _func_sqlite3_exec.CallN(5, ptr.dbconn, sqlchar, new_callback_func(), narg, perrmsg)
 	if err != nil {
 		if errmsg != uintptr(0) {
-			_sqlite3_free.CallN(1, errmsg)
+			_func_sqlite3_free.CallN(1, errmsg)
 			errmsg = uintptr(0)
 		}
 		return
@@ -147,7 +147,7 @@ func (ptr *Sqlite3BaseConn) Exec(sqlstr string, callarg uintptr, callback func(u
 	if retval != uintptr(SQLITE_OK) {
 		err = fmt.Errorf("exec [%s] error %d", sqlstr, retval)
 		if errmsg != uintptr(0) {
-			_sqlite3_free.CallN(1, errmsg)
+			_func_sqlite3_free.CallN(1, errmsg)
 			errmsg = uintptr(0)
 		}
 		return
