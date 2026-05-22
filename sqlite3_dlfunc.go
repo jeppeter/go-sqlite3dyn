@@ -16,14 +16,37 @@ var (
 	_func_sqlite3_free    *dlfunc.DllFunc = nil
 )
 
+func UnRegisterDll() {
+	if _func_sqlite3_open_v2 != nil {
+		_func_sqlite3_open_v2.Close()
+	}
+	_func_sqlite3_open_v2 = nil
+
+	if _func_sqlite3_exec != nil {
+		_func_sqlite3_exec.Close()
+	}
+	_func_sqlite3_exec = nil
+	if _func_sqlite3_close != nil {
+		_func_sqlite3_close.Close()
+	}
+	_func_sqlite3_close = nil
+
+	if _func_sqlite3_free != nil {
+		_func_sqlite3_free.Close()
+	}
+	_func_sqlite3_free = nil
+
+	if _lib_sqlite3_dll != nil {
+		_lib_sqlite3_dll.Close()
+	}
+	_lib_sqlite3_dll = nil
+
+}
+
 func InitDll(dllname string) (err error) {
 	defer func() {
 		if err != nil {
-			_func_sqlite3_open_v2 = nil
-			_func_sqlite3_exec = nil
-			_func_sqlite3_close = nil
-			_func_sqlite3_free = nil
-			_lib_sqlite3_dll = nil
+			UnRegisterDll()
 		}
 	}()
 
