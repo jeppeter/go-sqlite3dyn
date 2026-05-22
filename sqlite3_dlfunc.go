@@ -56,6 +56,7 @@ func InitDll(dllname string) (err error) {
 
 type Sqlite3BaseConn struct {
 	dbconn uintptr
+	narg   *execCallArgs
 }
 
 func (ptr *Sqlite3BaseConn) Close() {
@@ -85,11 +86,17 @@ func ConnSqlite3(dsn string) (ptr *Sqlite3BaseConn, err error) {
 	}
 
 	retval, err = _func_sqlite3_open_v2.CallN(4, dbname, ppdb, flags, uintptr(0))
-	if err != nil {
+	if pdb == uintptr(0) {
+		logdbg.Error("err %s pdb 0x%x", err.Error(), pdb)
 		flags = uintptr(SQLITE_OPEN_READWRITE)
 		retval, err = _func_sqlite3_open_v2.CallN(4, dbname, ppdb, flags, uintptr(0))
-		if err != nil {
-			err = fmt.Errorf("open [%s] error %s", dsn, err.Error())
+		if pdb == uintptr(0) {
+			if err != nil {
+				err = fmt.Errorf("open [%s] error %s", dsn, err.Error())
+			} else {
+				err = fmt.Errorf("open [%s] error nil", dsn)
+			}
+
 			return
 		}
 
@@ -153,6 +160,8 @@ func (ptr *Sqlite3BaseConn) Exec(sqlstr string, callarg uintptr, callback func(u
 	if err != nil {
 		return
 	}
+
+	ptr.narg = execarg
 	narg = uintptr(unsafe.Pointer(execarg))
 	sqlbyte = dlfunc.MakeCString(sqlstr)
 	sqlchar = uintptr(unsafe.Pointer(&sqlbyte[0]))
